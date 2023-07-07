@@ -89,32 +89,36 @@ function processCallbackQuery(callbackQuery) {
   const cockhead = callbackQuery.message.chat.first_name; //need to add a case when user = null use chatId add the username to the next column for vlookup
   const callbackData = callbackQuery.data;
   
-  if (callbackData === 'available') {
-    addAvailability(chatId, cockhead, 'Available');
-  } else if (callbackData === 'unavailable') {
-    removeAvailability(chatId, 'Unavailable');
-  }
+  updateAvailability(chatId, cockhead, callbackData);
   
   // Send an acknowledgement message for the callback query
   sendTelegramMessage(chatId, 'Thank you for your response!');
 }
-
-// Function to update the availability in Google Sheets
-// change to one sheet append if availble if not available take out name.
-function addAvailability(chatId, cockhead, available) {
-  const sheetName= 'Available';
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(sheetName);
-  const lastRow = sheet.getLastRow();
-  sheet.getRange(lastRow + 1, 1).setValue(cockhead);
-  sendTelegramMessage(chatId, `Thank you! Your availability has been recorded as available.`);
-}
-
-//Function to remove the name if unavailable in Google Sheets
-function removeAvailability(chatId, unavailable) {
-    const sheetName= 'Available';
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(sheetName);
-
-}
+  
+  // Function to update the availability in Google Sheets
+  function updateAvailability(chatId, name, availability) {
+    const sheet = SpreadsheetApp.openById(SHEET_ID);
+    const availabilitySheet = sheet.getSheetByName('Availability');
+  
+    const nameColumn = availabilitySheet.getRange('A:A').getValues();
+    const nameIndex = nameColumn.findIndex(row => row[0] === name);
+  
+    if (availability === 'available') {
+      if (nameIndex === -1) {
+        availabilitySheet.appendRow([name]);
+        sendTelegramMessage(chatId, 'Thank you! Your availability has been updated.');
+      } else {
+        sendTelegramMessage(chatId, 'You have already chosen "Available".');
+      }
+    } else if (availability === 'unavailable') {
+      if (nameIndex !== -1) {
+        availabilitySheet.deleteRow(nameIndex + 1);
+        sendTelegramMessage(chatId, 'Your availability has been updated to "Not Available".');
+      } else {
+        sendTelegramMessage(chatId, 'You have already chosen "Not Available".');
+      }
+    }
+  }
 
 // Handler for the incoming Telegram updates
 function doPost(e) {
