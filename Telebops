@@ -5,6 +5,7 @@ const BOT_TOKEN = '6063762353:AAExWPodIYWwxnOsowtATDqIZlcePMcQ2BQ';
 // Replace 'YOUR_GOOGLE_SHEET_ID' with the ID of your Google Sheet
 const SHEET_ID = '1OIBqfKncH_z7IG-ZBLcqpPSRNV7VyK65ORbyel1ZqQg';
 
+
 // Function to handle incoming updates from Telegram
 function processTelegramUpdate(e) {
   const update = JSON.parse(e.postData.contents);
@@ -85,12 +86,13 @@ function sendAvailabilityPoll(chatId) {
 // Function to process callback queries from the availability poll
 function processCallbackQuery(callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
+  const cockhead = callbackQuery.message.chat.first_name; //need to add a case when user = null use chatId add the username to the next column for vlookup
   const callbackData = callbackQuery.data;
   
   if (callbackData === 'available') {
-    updateAvailability(chatId, 'Available');
+    addAvailability(chatId, cockhead, 'Available');
   } else if (callbackData === 'unavailable') {
-    updateAvailability(chatId, 'Unavailable');
+    removeAvailability(chatId, 'Unavailable');
   }
   
   // Send an acknowledgement message for the callback query
@@ -98,12 +100,20 @@ function processCallbackQuery(callbackQuery) {
 }
 
 // Function to update the availability in Google Sheets
-function updateAvailability(chatId, status) {
-  const sheetName= (status === 'Available') ? 'Available' : 'Unavailable';
+// change to one sheet append if availble if not available take out name.
+function addAvailability(chatId, cockhead, available) {
+  const sheetName= 'Available';
   const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(sheetName);
   const lastRow = sheet.getLastRow();
-  sheet.getRange(lastRow + 1, 1).setValue(chatId);
-  sendTelegramMessage(chatId, `Thank you! Your availability has been recorded as "${status}".`);
+  sheet.getRange(lastRow + 1, 1).setValue(cockhead);
+  sendTelegramMessage(chatId, `Thank you! Your availability has been recorded as available.`);
+}
+
+//Function to remove the name if unavailable in Google Sheets
+function removeAvailability(chatId, unavailable) {
+    const sheetName= 'Available';
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(sheetName);
+
 }
 
 // Handler for the incoming Telegram updates
