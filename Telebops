@@ -99,13 +99,13 @@ function processCallbackQuery(callbackQuery) {
   function updateAvailability(chatId, name, availability) {
     const sheet = SpreadsheetApp.openById(SHEET_ID);
     const availabilitySheet = sheet.getSheetByName('Availability');
-  
+    const chatIdColumn = availabilitySheet.getRange('B:B').getValues();
     const nameColumn = availabilitySheet.getRange('A:A').getValues();
-    const nameIndex = nameColumn.findIndex(row => row[0] === name);
+    const nameIndex = chatIdColumn.findIndex(row => row[0] === name);
   
     if (availability === 'available') {
       if (nameIndex === -1) {
-        availabilitySheet.appendRow([name]);
+        availabilitySheet.appendRow([name, chatId]);
         sendTelegramMessage(chatId, 'Thank you! Your availability has been updated.');
       } else {
         sendTelegramMessage(chatId, 'You have already chosen "Available".');
