@@ -12,7 +12,7 @@ function processTelegramUpdate(e) {
   if (update.message && update.message.text) {
     const chatId = update.message.chat.id;
     const messageText = update.message.text.toLowerCase();
-
+    // add new commands here
     if (messageText === '/start') {
       startBot(chatId);
     } else if (messageText === '/update') {
@@ -96,29 +96,43 @@ function processCallbackQuery(callbackQuery) {
 }
   
   // Function to update the availability in Google Sheets
-  function updateAvailability(chatId, name, availability) {
-    const sheet = SpreadsheetApp.openById(SHEET_ID);
-    const availabilitySheet = sheet.getSheetByName('Availability');
-    const chatIdColumn = availabilitySheet.getRange('B:B').getValues();
-    const nameColumn = availabilitySheet.getRange('A:A').getValues();
-    const nameIndex = chatIdColumn.findIndex(row => row[0] === name);
-  
-    if (availability === 'available') {
-      if (nameIndex === -1) {
-        availabilitySheet.appendRow([name, chatId]);
-        sendTelegramMessage(chatId, 'Thank you! Your availability has been updated.');
-      } else {
-        sendTelegramMessage(chatId, 'You have already chosen "Available".');
-      }
-    } else if (availability === 'unavailable') {
+function updateAvailability(chatId, name, availability) {
+  const sheet = SpreadsheetApp.openById(SHEET_ID);
+  const availabilitySheet = sheet.getSheetByName('Availability');
+  const chatIdColumn = availabilitySheet.getRange('B:B').getValues();
+  const nameIndex = chatIdColumn.findIndex(row => row[0] === chatId);
+
+  if (availability === 'available') {
       if (nameIndex !== -1) {
-        availabilitySheet.deleteRow(nameIndex + 1);
-        sendTelegramMessage(chatId, 'Your availability has been updated to "Not Available".');
+          const currentRow = availabilitySheet.getRange(nameIndex + 1, 1, 1, 3).getValues()[0];
+          if (currentRow[2] !== 'Available') {
+              availabilitySheet.getRange(nameIndex + 1, 3).setValue('Available');
+              sendTelegramMessage(chatId, 'Your availability has been updated to "Available".');
+          } else {
+              sendTelegramMessage(chatId, 'You have already chosen "Available".');
+          }
       } else {
-        sendTelegramMessage(chatId, 'You have already chosen "Not Available".');
+          availabilitySheet.appendRow([name, chatId, 'Available']);
+          sendTelegramMessage(chatId, 'You have chosen Available');
       }
-    }
+          
+  } else if (availability === 'unavailable') {
+      if (nameIndex !== -1) {
+          const currentRow = availabilitySheet.getRange(nameIndex + 1, 1, 1, 3).getValues()[0];
+          if (currentRow[2] !== 'Unavailable') {
+              availabilitySheet.getRange(nameIndex + 1, 3).setValue('Unavailable');
+              sendTelegramMessage(chatId, 'Your availability has been updated to "Unavailable".');
+          } else {
+              sendTelegramMessage(chatId, 'You have already chosen "Unavailable".');
+          }
+      } else {
+          availabilitySheet.appendRow([name, chatId, 'Unavailable']);
+          sendTelegramMessage(chatId, 'You have chosen "Unavailable".');
+      }
   }
+}
+
+
 
 // Handler for the incoming Telegram updates
 function doPost(e) {
